@@ -1,0 +1,120 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "bumpversion",
+            "type": "shell",
+            "command": "bump2version",
+            "args": [
+                "--config-file",
+                "./build/bumpversion.cfg",
+                "${input:bumpLevel}"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "none",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "release candidate",
+            "type": "shell",
+            "command": "git",
+            "args": [
+                "checkout",
+                "-b",
+                "release/v${input:version}"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "none",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "bumpversion",
+            "type": "shell",
+            "command": "bump2version",
+            "args": [
+                "--config-file",
+                "./build/bumpversion.cfg",
+                "${input:bumpLevel}"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "none",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "build virtual environment",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "-m",
+                "venv",
+                ".venv"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "none",
+                "isDefault": false
+            }
+        },
+        {
+            "label": "install dev dependencies",
+            "type": "shell",
+            "command": "pip",
+            "args": [
+                "install",
+                "pylint,autopep8",
+                "radon",
+                "build"
+            ],
+            "problemMatcher": [],
+            "group": {
+                "kind": "none",
+                "isDefault": false
+            }
+        }
+    ],
+    "inputs": [
+        {
+            "id": "posixCWD",
+            "type": "command",
+            "command": "extension.commandvariable.workspace.folderPosix",
+            "args": {}
+        },
+        {
+            "id": "bumpLevel",
+            "type": "pickString",
+            "description": "Level of version bump to do: ",
+            "options": [
+                "patch",
+                "minor",
+                "major"
+            ],
+            "default": "patch"
+        },
+        {
+            "id": "version",
+            "type": "command",
+            "command": "shellCommand.execute",
+            "args": {
+                "command": "cat config/version",
+                "cwd": "${workspaceFolder}"
+            }
+        },
+        {
+            "id": "bumpLevel",
+            "type": "pickString",
+            "description": "Level of bump to make on version",
+            "options": [
+                "patch",
+                "minor",
+                "major"
+            ],
+            "default": "patch"
+        }
+    ]
+}

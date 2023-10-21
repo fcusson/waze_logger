@@ -1,0 +1,44 @@
+{
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./test",
+        "-p",
+        "test*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true,
+    "python.envFile": "${workspaceFolder}/.env",
+    "sqltools.connections": [
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "brother-analytics-cluster.cluster-cbvcjfwqa0vg.us-east-1.rds.amazonaws.com",
+            "port": 3306,
+            "driver": "MySQL",
+            "name": "sql_test",
+            "username": "zadmin",
+            "database": "amazon_case",
+            "askForPassword": true
+        },
+        {
+            "mysqlOptions": {
+                "authProtocol": "default",
+                "enableSsl": "Disabled"
+            },
+            "previewLimit": 50,
+            "server": "brother-analytics-dev.cluster-cbvcjfwqa0vg.us-east-1.rds.amazonaws.com",
+            "port": 3306,
+            "driver": "MySQL",
+            "username": "devadmin",
+            "database": "INFORMATION_SCHEMA",
+            "name": "DEV"
+        }
+    ],
+    "python.analysis.extraPaths": [
+        "./layers/pos_etl/python"
+    ]
+}
