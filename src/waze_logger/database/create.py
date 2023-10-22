@@ -1,63 +1,117 @@
 """module used for the creation of the database on setup"""
 
-import json
+from itertools import combinations
 
-from sqlalchemy import (
-    Engine,
-    Text,
-    Column,
-    String,
-    DECIMAL,
-    Integer,
-    CheckConstraint,
-    UniqueConstraint,
-    ForeignKey,
-    PrimaryKeyConstraint,
-    Table,
-    MetaData,
-    DateTime
-)
+import sqlalchemy as db
 
-from sqlalchemy.ext.declarative import declarative_base
-
-Base = declarative_base()
+from waze_logger.location import Location
+from waze_logger.route import Route
 
 
-def create_database(engine: Engine, force: bool = False):
+def create_database(
+        engine: db.Engine,
+        locations: list[Location] = None,
+):
 
-    meta_data = MetaData()
+    _create_table(engine)
 
-    Table(
+    if locations is not None:
+
+        # create the locations in the database and retrieve them with
+        # ids
+        locations = _create_locations(engine, locations)
+
+        # get all pairs of locations
+        possible_routes = combinations(locations, 2)
+        routes = []
+
+        for route in possible_routes:
+            routes.append(Route(route[0], route[1]))
+            routes.append(Route(route[1], route[0]))
+
+        routes = _create_routes(engine, routes)
+
+
+def _create_routes(
+        engine: db.Engine,
+        routes: list[Route],
+) -> list[Route]:
+
+    table = db.Table("route", autoload_with=engine)
+
+    with engine.connect() as connection:
+
+        # insert the routes
+        records = [x.to_record() for x in routes]
+        connection.execute(db.insert(table), records)
+        connection.commit()
+
+        return connection.execute(db.select(table))
+
+
+def _create_locations(
+        engine: db.Engine,
+        locations: list[Location]
+) -> list[Location]:
+
+    meta_data = db.MetaData()
+
+    table = db.Table("location", meta_data, autoload_with=engine)
+
+    with engine.connect() as connection:
+
+        # insert the locations
+        records = [x.to_record() for x in locations]
+        connection.execute(db.insert(table), records)
+        connection.commit()
+
+        # retrieve the records with id from the database
+        response = connection.execute(db.select(table))
+        headers = response.keys()
+
+        locations = []
+        for row in response.fetchall():
+            locations.append(dict(zip(headers, row)))
+
+        return [Location(**x) for x in locations]
+
+
+def _create_table(engine: db.Engine):
+
+    meta_data = db.MetaData()
+
+    db.Table(
         "location", meta_data,
-        Column("id", Integer, primary_key=True, autoincrement=True),
-        Column("name", String(32), nullable=False),
-        Column("latitude", DECIMAL(8, 5), nullable=False),
-        Column("longitude", DECIMAL(7, 5), nullable=False),
-        UniqueConstraint("latitude", "longitude", name="unique_location"),
-        CheckConstraint(
+        db.Column("id", db.Integer, primary_key=True, autoincrement=True),
+        db.Column("name", db.String(32), nullable=False),
+        db.Column("latitude", db.DECIMAL(8, 5), nullable=False),
+        db.Column("longitude", db.DECIMAL(7, 5), nullable=False),
+        db.UniqueConstraint("latitude", "longitude", name="unique_location"),
+        db.CheckConstraint(
             "latitude >= -180 AND latitude <= 180",
             name="latitude_scope"
         ),
-        CheckConstraint(
+        db.CheckConstraint(
             "longitude >= -90 AND longitude <= 90",
             name="longitude_scope"
         ),
     )
 
-    Table(
+    db.Table(
         "route", meta_data,
-        Column("id", Integer, primary_key=True, autoincrement=True),
-        Column("origin", ForeignKey("location.id"), nullable=False),
-        Column("destination", ForeignKey("location.id"), nullable=False),
-        UniqueConstraint("origin", "destination", name="unique_route")
+        db.Column("id", db.Integer, primary_key=True, autoincrement=True),
+        db.Column("origin", db.ForeignKey("location.id"), nullable=False),
+        db.Column("destination", db.ForeignKey("location.id"), nullable=False),
+        db.UniqueConstraint("origin", "destination", name="unique_route")
     )
 
-    Table(
+    db.Table(
         "route_duration", meta_data,
-        Column("logged_time", DateTime),
-        Column("route", ForeignKey("route.id")),
-        Column("trip_duration", Integer),
-        PrimaryKeyConstraint("logged_time", "route", name="route_duration_pk"),
+        db.Column("logged_time", db.DateTime),
+        db.Column("route", db.ForeignKey("route.id")),
+        db.Column("trip_duration", db.Integer),
+        db.PrimaryKeyConstraint("logged_time", "route",
+                                name="route_duration_pk"),
     )
 
     meta_data.create_all(engine)
