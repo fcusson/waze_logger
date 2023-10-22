@@ -1,5 +1,7 @@
 """module used for the creation of the database on setup"""
 
+import json
+
 from sqlalchemy import (
     Engine,
     Text,
@@ -9,9 +11,13 @@ from sqlalchemy import (
     Integer,
     CheckConstraint,
     UniqueConstraint,
+    ForeignKey,
+    PrimaryKeyConstraint,
     Table,
-    MetaData
+    MetaData,
+    DateTime
 )
+
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -19,15 +25,9 @@ Base = declarative_base()
 
 def create_database(engine: Engine, force: bool = False):
 
-    with engine.connect() as connection:
+    meta_data = MetaData()
 
-        meta_data = MetaData()
-
-        statement = Text("CREATE DATABASE waze_logger;")
-        connection.execute(statement)
-        connection.commit()
-
-    location = Table(
+    Table(
         "location", meta_data,
         Column("id", Integer, primary_key=True, autoincrement=True),
         Column("name", String(32), nullable=False),
@@ -44,9 +44,20 @@ def create_database(engine: Engine, force: bool = False):
         ),
     )
 
-    route = Table(
+    Table(
         "route", meta_data,
         Column("id", Integer, primary_key=True, autoincrement=True),
-        Column("name", String(32)),
-        Column("origin", Integer,)
+        Column("origin", ForeignKey("location.id"), nullable=False),
+        Column("destination", ForeignKey("location.id"), nullable=False),
+        UniqueConstraint("origin", "destination", name="unique_route")
     )
+
+    Table(
+        "route_duration", meta_data,
+        Column("logged_time", DateTime),
+        Column("route", ForeignKey("route.id")),
+        Column("trip_duration", Integer),
+        PrimaryKeyConstraint("logged_time", "route", name="route_duration_pk"),
+    )
+
+    meta_data.create_all(engine)
