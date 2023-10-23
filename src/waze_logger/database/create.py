@@ -11,7 +11,20 @@ from waze_logger.route import Route
 def create_database(
         engine: db.Engine,
         locations: list[Location] = None,
+        force: bool = False,
 ):
+
+    # check if tables exist and if so drop before continuing
+    metadata = db.MetaData()
+    metadata.reflect(engine)
+
+    if len(metadata.tables.keys()) > 0 and not force:
+        raise ValueError(
+            "The database contains tables. Aborting. To clear the database,"
+            "set 'force' to true"
+        )
+    elif len(metadata.tables.keys()) > 0 and force:
+        metadata.drop_all(bind=engine)
 
     _create_table(engine)
 
@@ -37,7 +50,9 @@ def _create_routes(
         routes: list[Route],
 ) -> list[Route]:
 
-    table = db.Table("route", autoload_with=engine)
+    meta_data = db.MetaData()
+
+    table = db.Table("route", meta_data, autoload_with=engine)
 
     with engine.connect() as connection:
 
@@ -46,7 +61,7 @@ def _create_routes(
         connection.execute(db.insert(table), records)
         connection.commit()
 
-        return connection.execute(db.select(table))
+        response = connection.execute(db.select(table))
 
 
 def _create_locations(

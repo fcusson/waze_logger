@@ -1,23 +1,33 @@
 {
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Debug Current File",
-            "type": "python",
-            "request": "launch",
-            "program": "${file}",
-            "justMyCode": true,
-            "cwd": "${workspaceFolder}",
-            "console": "integratedTerminal",
-            "args": []
-        },
-        {
-            "name": "debug_config",
-            "type": "python",
-            "request": "test",
-            "console": "integratedTerminal",
-            "logToFile": true
-        }
-    ],
-    "inputs": []
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: Module",
+      "type": "python",
+      "request": "launch",
+      "module": "waze_logger",
+      "justMyCode": true,
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": []
+    },
+    {
+      "name": "Debug Current File",
+      "type": "python",
+      "request": "launch",
+      "program": "${file}",
+      "justMyCode": true,
+      "cwd": "${workspaceFolder}",
+      "console": "integratedTerminal",
+      "args": []
+    },
+    {
+      "name": "debug_config",
+      "type": "python",
+      "request": "test",
+      "console": "integratedTerminal",
+      "logToFile": true
+    }
+  ],
+  "inputs": []
 }

@@ -35,12 +35,12 @@ def get_route(origin: Location, destination: Location) -> dict:
 
 def get_route_duration(
     origin: Location,
-    destination: Location
-) -> dt.timedelta:
+    destination: Location,
+) -> int:
 
     route = get_route(origin, destination)
 
-    return dt.timedelta(seconds=route["totalRouteTime"])
+    return route["totalRouteTime"]
 
 
 if __name__ == '__main__':
